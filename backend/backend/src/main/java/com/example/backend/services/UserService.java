@@ -1,6 +1,7 @@
 package com.example.backend.services;
 
 import com.example.backend.dto.CredentialsDto;
+import com.example.backend.dto.PasswordUpdateDto;
 import com.example.backend.dto.SignUpDto;
 import com.example.backend.dto.UserDto;
 import com.example.backend.entity.User;
@@ -52,10 +53,23 @@ public class UserService {
         return userMapper.toUserDto(savedUser);
     }
 
+
     public UserDto findByLogin(String login) {
         User user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new AppExceptions("Unknown user", HttpStatus.NOT_FOUND));
         return userMapper.toUserDto(user);
     }
 
+
+    public void updatePassword(Long userId, PasswordUpdateDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı"));
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Eski şifre yanlış");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+    }
 }

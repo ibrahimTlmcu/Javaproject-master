@@ -1,8 +1,6 @@
 package com.example.backend.services;
 
-import com.example.backend.entity.Faq;
 import com.example.backend.entity.Kategori;
-import com.example.backend.repositories.FaqRepository;
 import com.example.backend.repositories.KategoriRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,7 +14,8 @@ public class KategoriService {
     private KategoriRepository kategoriRepository;
 
     public List<Kategori> getAllKategori() {
-        return kategoriRepository.findAll();
+        var a =  kategoriRepository.findAll();
+        return a ;
     }
 
     public Optional<Kategori> getKategoriById(Long id) {
@@ -30,16 +29,13 @@ public class KategoriService {
     public Kategori updateKategori(Long id, Kategori kategoriDetails) {
         Kategori kategori = kategoriRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Kategori bulunamadı, id: " + id));
-
         kategori.setKategoriAd(kategoriDetails.getKategoriAd());
-
         return kategoriRepository.save(kategori);
     }
 
-
-    public void deleterKategori(Long id) {
+    public void deleteKategori(Long id) { // Metod adı düzeltildi: deleterKategori -> deleteKategori
         Kategori kategori = kategoriRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("FAQ not found with id " + id));
+                .orElseThrow(() -> new RuntimeException("Kategori bulunamadı, id: " + id));
         kategoriRepository.delete(kategori);
     }
 }

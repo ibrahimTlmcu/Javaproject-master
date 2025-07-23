@@ -29,4 +29,11 @@ public class Talep {
 
     @Column(name = "aciklama", columnDefinition = "TEXT", nullable = false)
     private String aciklama;
+
+    @Column(name = "login", nullable = false)
+    private String login;
+
+    @Column(name = "durum", nullable = false)
+    private int durum = 0;  // 0 = cevap yok, 1 = cevap var
+
 }
