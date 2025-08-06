@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.nio.CharBuffer;
+import java.util.ArrayList;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -28,30 +29,46 @@ public class UserService {
 
     private final UserMapper userMapper;
 
-    public UserDto login(CredentialsDto credentialsDto) {
-        User user = userRepository.findByLogin(credentialsDto.login())
-                .orElseThrow(() -> new AppExceptions("Unknown user", HttpStatus.NOT_FOUND));
+    // src/main/java/com/example/backend/services/UserService.java
+    public UserDto login(CredentialsDto credentials) {
+        User user = userRepository.findByLogin(credentials.login())
+                .orElseThrow(() -> new AppExceptions("User not found", HttpStatus.NOT_FOUND));
 
-        if (passwordEncoder.matches(CharBuffer.wrap(credentialsDto.password()), user.getPassword())) {
-            return userMapper.toUserDto(user);
+        if (!passwordEncoder.matches(
+                String.valueOf(credentials.password()),
+                user.getPassword())) {
+            throw new AppExceptions("Invalid credentials", HttpStatus.UNAUTHORIZED);
         }
-        throw new AppExceptions("Invalid password", HttpStatus.BAD_REQUEST);
+
+        // DTO’ya rollerini taşı
+        UserDto dto = UserDto.builder()
+                .id(user.getId())
+                .login(user.getLogin())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .roles(new ArrayList<>(user.getRoles()))   // ← burada set ediliyor
+                .build();
+
+        return dto;
     }
 
-    public UserDto register(SignUpDto userDto) {
-        Optional<User> optionalUser = userRepository.findByLogin(userDto.login());
 
-        if (optionalUser.isPresent()) {
+
+    public UserDto register(SignUpDto userDto) {
+        if (userRepository.findByLogin(userDto.login()).isPresent()) {
             throw new AppExceptions("Login already exists", HttpStatus.BAD_REQUEST);
         }
 
         User user = userMapper.signUpToUser(userDto);
-        user.setPassword(passwordEncoder.encode(CharBuffer.wrap(userDto.password())));
+        // eski CharBuffer.wrap(...) yerine direkt:
+        user.setPassword(passwordEncoder.encode(userDto.password()));
+        // DEFAULT rol ataması, eğer henüz yapmadıysanız:
+        user.getRoles().add("USER");
+        user = userRepository.save(user);
 
-        User savedUser = (User) userRepository.save(user);
-
-        return userMapper.toUserDto(savedUser);
+        return userMapper.toUserDto(user);
     }
+
 
 
     public UserDto findByLogin(String login) {

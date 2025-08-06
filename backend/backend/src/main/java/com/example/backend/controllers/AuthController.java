@@ -1,4 +1,5 @@
 package com.example.backend.controllers;
+import com.example.backend.config.UserAuthProvider;
 import jakarta.validation.Valid;
 
 import com.example.backend.config.UserAuthenticationProvider;
@@ -17,31 +18,40 @@ import java.net.URI;
 public class AuthController {
 
     private final UserService userService;
-    private final UserAuthenticationProvider userAuthenticationProvider;
+
+
+    private final UserAuthProvider userAuthProvider;
 
 
     @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping("/login")
-
     public ResponseEntity<UserDto> login(@RequestBody @Valid CredentialsDto credentialsDto) {
-
-        UserDto userDto = userService.login(credentialsDto);
-        userDto.setToken(userAuthenticationProvider.createToken(userDto));
-        return ResponseEntity.ok(userDto);
+        UserDto dto = userService.login(credentialsDto);
+        // userService.login döndüğü UserDto içinde artık roller de var:
+        dto.setToken(userAuthProvider.createToken(dto));
+        return ResponseEntity.ok(dto);
     }
 
+
     @CrossOrigin(origins = "http://localhost:4200")
+    // src/main/java/com/example/backend/controllers/AuthController.java
     @PostMapping("/register")
-    public ResponseEntity<UserDto> register(@RequestBody @Valid SignUpDto user) {
-        UserDto createdUser = userService.register(user);
-        createdUser.setToken(userAuthenticationProvider.createToken(createdUser));
-        return ResponseEntity.created(URI.create("/users/" + createdUser.getId())).body(createdUser);
+    public ResponseEntity<UserDto> register(@RequestBody @Valid SignUpDto dto) {
+        // 1) Service katmanını rollerle çağır
+        UserDto createdUser = userService.register(dto);
+
+        // 2) JWT token’ı oluşturup DTO’ya set et
+        createdUser.setRoles(dto.roles());  // DTO’ya da roller ekle
+        createdUser.setToken(userAuthProvider.createToken(createdUser));
+
+        URI location = URI.create("/users/" + createdUser.getId());
+        return ResponseEntity.created(location).body(createdUser);
     }
 
     @PostMapping("/deneme")
     public ResponseEntity<UserDto> deneme(@RequestBody @Valid SignUpDto user) {
         UserDto createdUser = userService.register(user);
-        createdUser.setToken(userAuthenticationProvider.createToken(createdUser));
+        createdUser.setToken(userAuthProvider.createToken(createdUser));
         return ResponseEntity.created(URI.create("/users/" + createdUser.getId())).body(createdUser);
     }
 

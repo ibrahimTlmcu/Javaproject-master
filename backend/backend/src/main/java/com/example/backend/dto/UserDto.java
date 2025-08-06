@@ -5,15 +5,22 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@Data
-@NoArgsConstructor
-@Builder
-public class UserDto {
+import java.util.ArrayList;
+import java.util.List;
 
-    private Long id ;
+// src/main/java/com/example/backend/dto/UserDto.java
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserDto {
+    private Long id;
     private String firstName;
     private String lastName;
     private String login;
+
+    @Builder.Default                // ← Lombok Builder da default atar
+    private List<String> roles = new ArrayList<>();
+
     private String token;
 }
